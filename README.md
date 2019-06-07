@@ -1,6 +1,6 @@
 # openstack
 
-We are using centos for this process
+We are using CentOS for this process
 
 Enable the OpenStack repository
 ```
