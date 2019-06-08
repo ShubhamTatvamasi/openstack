@@ -104,3 +104,41 @@ DEVICETYPE=ovs
 OVS_BRIDGE=br-ex
 ONBOOT=yes
 ```
+
+make sure your external bridge settings look like below
+```
+vim /etc/sysconfig/network-scripts/ifcfg-br-ex
+```
+```
+DEVICE=br-ex
+DEVICETYPE=ovs
+TYPE=OVSBridge
+BOOTPROTO=static
+IPADDR=192.168.100.11
+NETMASK=255.255.255.0
+GATEWAY=192.168.100.1
+IPV4_FAILURE_FATAL=no
+IPV6INIT=no
+DNS1=8.8.8.8
+ONBOOT=yes
+```
+
+restart the network service
+```
+service network restart
+```
+
+this command provides you the openstack admin privileges
+```
+source keystonerc_admin
+```
+
+run this command to create your provider network for your instances so they can communicate #with the outside world
+```
+neutron net-create external_network --provider:network_type flat --provider:physical_network extnet --router:external
+```
+
+this command creates the subnet attached to your provider network. You should be doing the configuration according to the LAN that your linux machine is connected to
+```
+neutron subnet-create --name public_subnet --enable_dhcp=False --allocation-pool start=192.168.100.100,end=192.168.100.120 --gateway=192.168.100.1 external_network 192.168.100.0/24
+```
