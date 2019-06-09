@@ -2,6 +2,8 @@
 
 We are using CentOS for this process
 
+https://www.rdoproject.org/install/packstack/
+
 check your CentOS release 
 ```
 cat /etc/redhat-release
@@ -38,8 +40,16 @@ systemctl start network
 
 replace "enp0s3" with your interface name and check it's current settings
 ```
-cat /etc/sysconfig/network-scripts/ifcfg-enp0s3
+vim /etc/sysconfig/network-scripts/ifcfg-enp0s3
 ```
+```
+BOOTPROTO="none"
+IPADDR="192.168.100.11"
+PREFIX="24"
+GATEWAY="192.168.100.1"
+DNS1="8.8.8.8"
+```
+
 
 disable selinux from it's config file /etc/selinux/config 
 ```
@@ -66,12 +76,22 @@ yum install -y https://rdoproject.org/repos/rdo-release.rpm
 
 https://releases.openstack.org/
 
-On CentOS install the latest release of openstack package
+On CentOS install the latest release of openstack package:
 ```
 yum install -y centos-release-openstack-stein
 ```
 
-this updates your current packages
+install yum utilities
+```
+yum install -y yum-utils
+```
+
+Make sure the repository is enabled:
+```
+yum-config-manager --enable openstack-stein
+```
+
+this updates your current packages:
 ```
 yum update -y
 ```
@@ -88,9 +108,12 @@ ip address show
 
 run the packstack installer with below parameters
 ```
-packstack --allinone --provision-demo=n --os-neutron-ovs-bridge-mappings=extnet:br-ex --os-neutron-ml2-type-drivers=vxlan,flat
+packstack --allinone
 ```
-> Installation may take about an hour depending on your hardware!
+> Installation may take about an hour or two depending on your hardware!
+
+Once the process is complete, you can log in to the OpenStack web interface Horizon by going to http://192.168.100.11/dashboard. The user name is admin. The password can be found in the file `keystonerc_admin` in the `/root` directory of the control node.
+
 
 make sure your ethernet interface settings look like this, you should remove the IP address from the interface
 ```
