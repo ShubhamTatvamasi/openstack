@@ -64,9 +64,11 @@ On RHEL, download and install the RDO repository RPM(not required for centos)
 yum install -y https://rdoproject.org/repos/rdo-release.rpm
 ```
 
+https://releases.openstack.org/
+
 On CentOS install the latest release of openstack package
 ```
-yum install -y centos-release-openstack-ocata
+yum install -y centos-release-openstack-stein
 ```
 
 this updates your current packages
@@ -89,8 +91,6 @@ run the packstack installer with below parameters
 packstack --allinone --provision-demo=n --os-neutron-ovs-bridge-mappings=extnet:br-ex --os-neutron-ml2-type-drivers=vxlan,flat
 ```
 > Installation may take about an hour depending on your hardware!
-
-
 
 make sure your ethernet interface settings look like this, you should remove the IP address from the interface
 ```
