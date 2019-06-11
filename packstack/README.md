@@ -158,10 +158,14 @@ source keystonerc_admin
 
 run this command to create your provider network for your instances so they can communicate #with the outside world
 ```
+openstack network create external_network --provider-network-type flat --provider-physical-network extnet
+
 neutron net-create external_network --provider:network_type flat --provider:physical_network extnet --router:external
 ```
 
 this command creates the subnet attached to your provider network. You should be doing the configuration according to the LAN that your linux machine is connected to
 ```
+openstack subnet create --gateway 192.168.100.1 --subnet-range 192.168.100.0/24 --no-dhcp --allocation-pool start=192.168.100.100,end=192.168.100.120 --network public public_subnet
+
 neutron subnet-create --name public_subnet --enable_dhcp=False --allocation-pool start=192.168.100.100,end=192.168.100.120 --gateway=192.168.100.1 external_network 192.168.100.0/24
 ```

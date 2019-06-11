@@ -15,21 +15,10 @@ list of commands for creating a network
 openstack network create -h
 ```
 
-run this command to create your provider network for your instances so they can communicate #with the outside world
-```
-openstack network create external_network --provider-network-type flat --provider-physical-network extnet
-```
-
 list of commands for creating a subnet
 ```
 openstack subnet create -h
 ```
-
-this command creates the subnet attached to your provider network. You should be doing the configuration according to the LAN that your linux machine is connected to
-```
-openstack subnet create --gateway 192.168.100.1 --subnet-range 192.168.100.0/24 --no-dhcp --allocation-pool start=192.168.100.100,end=192.168.100.120 --network public public_subnet
-```
----
 
 get the list of all network agents
 ```
@@ -56,14 +45,25 @@ create a subnet for the network
 openstack subnet create subnet1 --subnet-range 10.5.5.0/24 --dns-nameserver 8.8.8.8 --network intnet
 ```
 
-<!-- get the list of available namespace
+get the list of available namespace
 ```
 ip netns
-ip netns exec <namespace> ping 10.5.5.2
-ip netns exec <namespace> ip address show
-ovs-vsctl show
+```
 
-``` -->
+test if the network is active
+```
+ip netns exec qdhcp-1a2035a3-6712-4de5-96ae-b383df4a7b7b ping 10.5.5.2
+```
+
+get the network details
+```
+ip netns exec qdhcp-1a2035a3-6712-4de5-96ae-b383df4a7b7b ip address show
+```
+
+check the network connection
+```
+ovs-vsctl show
+```
 
 create a new router
 ```
@@ -77,21 +77,33 @@ openstack router add subnet R2 subnet1
 
 assign gateway to the router
 ```
-openstack router set --external-gateway public R2
+openstack router set R2 --external-gateway public 
 ```
 
-
-<!-- ovs-vsctl show
+check the new router namespace
+```
+ovs-vsctl show
 ip netns
-ip nets exec <namespace> ip a show
-ip nets exec <namespace> ping 5.5.5.1
-neutron router-gateway-set R2 external_network
-Openstack network list -->
+```
 
+show the ip address
+```
+ip netns exec qrouter-55945bf6-ac35-422b-84db-c14e45911aac ip address show
+```
+
+check router connection
+```
+ip netns exec qrouter-55945bf6-ac35-422b-84db-c14e45911aac ping 10.5.5.1
+```
+
+get the list of all networks
+```
+openstack network list
+```
 
 create a new instance
 ```
-openstack server create --image cirros --flavor 1 --network intnet instance1
+openstack server create --image cirros-0.4.0-x86_64-disk --flavor c1 --network intnet instance1
 ```
 
 list of security group
@@ -114,16 +126,76 @@ create new rule
 openstack security group rule create --src-ip 0.0.0.0/0 --dst-port 22 --protocol tcp --ingress <group_ID>
 ```
 
+check the instance ip address
+```
+openstack server list
+```
 
+check if the instance is alive
+```
+ip netns exec qrouter-55945bf6-ac35-422b-84db-c14e45911aac ping 10.5.5.24
+```
 
+ssh into the instance
+```
+ip netns exec qrouter-55945bf6-ac35-422b-84db-c14e45911aac ssh cirros@10.5.5.24
+```
+> password: gocubsgo
 
-ip netns exec <namespace> ssh cirros@10.5.5.X
-Ping 10.5.5.1
-ping 192.168.0.178
+ping default gateway inside instance
+```
+ping 10.5.5.1
+```
+
+get the list of floating ip
+```
 openstack subnet list
-openstack floating ip create --subnet <subnet_ID> --floating-ip-address 192.168.0.110 <network_name_or_ID>
-openstack server add floating ip <server_name> <IP_address>
-ping <floating ip>
-ssh root@<floating ip>
-openstack ip availability list --project poc
-$ openstack command list | grep openstack.network -A 70
+```
+
+create a subnet for public access
+```
+openstack subnet create public-subnet-2 --subnet-range 192.168.100.0/24 --gateway 192.168.100.1 --dns-nameserver 8.8.8.8 --network public
+```
+
+attach your router to subnet
+```
+openstack router add subnet R2 public-subnet-2
+```
+
+assign new gateway to the router
+```
+openstack router set --route destination=192.168.100.0/24,gateway=192.168.100.1 --external-gateway public R2
+```
+
+create a floating ip
+```
+openstack floating ip create --subnet public-subnet-2 public
+```
+
+assign floating ip to the server
+```
+openstack server add floating ip instance1 192.168.100.88
+openstack server add floating ip instance1 172.24.4.165
+```
+
+remove floating ip
+```
+openstack server remove floating ip instance1 192.168.100.88
+openstack server remove floating ip instance1 172.24.4.165
+```
+
+trying pinging the floating ip
+```
+ping 172.24.4.165
+```
+
+ssh from outside
+```
+ssh cirros@172.24.4.165
+```
+> password: gocubsgo
+
+get the list of all ip status related to the project 
+```
+openstack ip availability list --project admin
+```
