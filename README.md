@@ -1,167 +1,121 @@
 # openstack
 
-We are using CentOS for this process
 
-https://www.rdoproject.org/install/packstack/
+first install docker in centos
 
-check your CentOS release 
-```
-cat /etc/redhat-release
-```
+https://docs.docker.com/install/linux/docker-ce/centos/
 
-populate your /etc/environment file with below locale settings 
-```
-vim /etc/environment
-```
-```
-LANG=en_US.utf-8
-LC_ALL=en_US.utf-8
-```
+### Install dependencies
 
-check the status of firewalld service. Stop and disable it if enabled
-```
-systemctl status firewalld
-systemctl stop firewalld
-systemctl disable firewalld
-```
-
-check the status of NetworkManager service. Stop and disable it if enabled
-```
-systemctl status NetworkManager
-systemctl stop NetworkManager
-systemctl disable NetworkManager
-```
-
-enable and start network service
-```
-systemctl enable network 
-systemctl start network
-```
-
-replace "enp0s3" with your interface name and check it's current settings
-```
-vim /etc/sysconfig/network-scripts/ifcfg-enp0s3
-```
-```
-BOOTPROTO="none"
-IPADDR="192.168.100.11"
-PREFIX="24"
-GATEWAY="192.168.100.1"
-DNS1="8.8.8.8"
-```
-
-
-disable selinux from it's config file /etc/selinux/config 
-```
-vim /etc/selinux/config
-```
-```
-SELINUX=disabled
-```
-
-reboot your system
-```
-reboot
-```
-
-after the reboot check the status of selinux, it should be disabled
-```
-getenforce
-```
-
-On RHEL, download and install the RDO repository RPM(not required for centos)
-```
-yum install -y https://rdoproject.org/repos/rdo-release.rpm
-```
-
-https://releases.openstack.org/
-
-On CentOS install the latest release of openstack package:
-```
-yum install -y centos-release-openstack-stein
-```
-
-install yum utilities
-```
-yum install -y yum-utils
-```
-
-Make sure the repository is enabled:
-```
-yum-config-manager --enable openstack-stein
-```
-
-this updates your current packages:
-```
-yum update -y
-```
-
-install packstack installer
-```
-yum install -y openstack-packstack
-```
-
-to check the IP addresses on your machine 
-```
-ip address show
-```
-
-run the packstack installer with below parameters
-```
-packstack --allinone
-```
-> Installation may take about an hour or two depending on your hardware!
-
-Once the process is complete, you can log in to the OpenStack web interface Horizon by going to http://192.168.100.11/dashboard. The user name is admin. The password can be found in the file `keystonerc_admin` in the `/root` directory of the control node.
-
-
-make sure your ethernet interface settings look like this, you should remove the IP address from the interface
-```
-vim /etc/sysconfig/network-scripts/ifcfg-enp0s3
-```
-```
-TYPE=OVSPort
-NAME=enp0s3
-DEVICE=enp0s3
-DEVICETYPE=ovs
-OVS_BRIDGE=br-ex
-ONBOOT=yes
-```
-
-make sure your external bridge settings look like below
-```
-vim /etc/sysconfig/network-scripts/ifcfg-br-ex
-```
-```
-DEVICE=br-ex
-DEVICETYPE=ovs
-TYPE=OVSBridge
-BOOTPROTO=static
-IPADDR=192.168.100.11
-NETMASK=255.255.255.0
-GATEWAY=192.168.100.1
-IPV4_FAILURE_FATAL=no
-IPV6INIT=no
-DNS1=8.8.8.8
-ONBOOT=yes
-```
-
-restart the network service
+if unable to ssh into system
 ```
 service network restart
 ```
 
-this command provides you the openstack admin privileges
+install git
 ```
-source keystonerc_admin
-```
-
-run this command to create your provider network for your instances so they can communicate #with the outside world
-```
-neutron net-create external_network --provider:network_type flat --provider:physical_network extnet --router:external
+yum install git -y
 ```
 
-this command creates the subnet attached to your provider network. You should be doing the configuration according to the LAN that your linux machine is connected to
+install EPEL
 ```
-neutron subnet-create --name public_subnet --enable_dhcp=False --allocation-pool start=192.168.100.100,end=192.168.100.120 --gateway=192.168.100.1 external_network 192.168.100.0/24
+yum install epel-release -y
 ```
+
+Install Python build dependencies:
+```
+yum install python-devel libffi-devel gcc openssl-devel libselinux-python -y
+```
+
+Install the virtualenv package:
+```
+yum install python-pip -y
+```
+
+Create a virtual environment and activate it:
+```
+virtualenv /path/to/virtualenv
+source /path/to/virtualenv/bin/activate
+```
+
+Ensure the latest version of pip is installed:
+```
+pip install -U pip
+```
+
+Install Ansible. Currently, Kolla Ansible requires Ansible 2.4+.
+```
+pip install ansible
+```
+
+### Install Kolla-ansible
+
+Install kolla-ansible and its dependencies using pip.
+```
+pip install kolla-ansible
+```
+
+Create the /etc/kolla directory.
+```
+sudo mkdir -p /etc/kolla
+sudo chown $USER:$USER /etc/kolla
+```
+
+Copy globals.yml and passwords.yml to /etc/kolla directory.
+```
+cp -r /path/to/virtualenv/share/kolla-ansible/etc_examples/kolla/* /etc/kolla
+```
+
+Copy all-in-one and multinode inventory files to the current directory.
+```
+cp /path/to/virtualenv/share/kolla-ansible/ansible/inventory/* .
+```
+
+Clone kolla and kolla-ansible repositories from git.
+```
+git clone https://github.com/openstack/kolla
+git clone https://github.com/openstack/kolla-ansible
+```
+
+Install requirements of kolla and kolla-ansible:
+```
+pip install -r kolla/requirements.txt
+pip install -r kolla-ansible/requirements.txt
+```
+
+Create the /etc/kolla directory.
+```
+sudo mkdir -p /etc/kolla
+sudo chown $USER:$USER /etc/kolla
+```
+
+Copy the configuration files to /etc/kolla directory. kolla-ansible holds the configuration files ( globals.yml and passwords.yml) in etc/kolla.
+```
+cp -r kolla-ansible/etc/kolla/* /etc/kolla
+```
+
+Copy the inventory files to the current directory. kolla-ansible holds inventory files ( all-in-one and multinode) in the ansible/inventory directory.
+```
+cp kolla-ansible/ansible/inventory/* .
+```
+
+### Deployment
+
+Bootstrap servers with kolla deploy dependencies:
+```
+kolla-ansible -i ./all-in-one bootstrap-servers
+```
+
+Do pre-deployment checks for hosts:
+```
+kolla-ansible -i ./all-in-one prechecks
+```
+
+Finally proceed to actual OpenStack deployment:
+```
+kolla-ansible -i ./all-in-one deploy
+```
+
+
+
+
