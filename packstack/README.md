@@ -1,4 +1,4 @@
-# installation
+# packstack
 
 We are using CentOS for this process
 
