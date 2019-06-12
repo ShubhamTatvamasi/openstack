@@ -29,9 +29,7 @@ ADMIN_PASSWORD=secret
 DATABASE_PASSWORD=$ADMIN_PASSWORD
 RABBIT_PASSWORD=$ADMIN_PASSWORD
 SERVICE_PASSWORD=$ADMIN_PASSWORD
-HOST_IP=w.x.y.z
 ```
-> update the host ip and password
 
 after the installation is complete download the RC file from the dashboard
 
