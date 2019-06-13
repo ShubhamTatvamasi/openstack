@@ -1,4 +1,4 @@
-# packstack
+# docs
 
 We are using CentOS for this process
 
