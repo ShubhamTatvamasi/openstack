@@ -199,3 +199,14 @@ get the list of all ip status related to the project
 ```
 openstack ip availability list --project admin
 ```
+
+Openstack Security rule
+```
+Rule: All ICMP
+Direction: Ingress
+Remote: CIDR
+CIDR: 0.0.0.0/0
+
+Allow SSH
+CIDR: 0.0.0.0/0
+```
