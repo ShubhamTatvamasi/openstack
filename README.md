@@ -2,6 +2,10 @@
 
 install openstack
 
+```bash
+sudo apt purge python3-simplejson
+```
+
 https://docs.openstack.org/devstack/latest/
 
 Specs required
