@@ -4,6 +4,7 @@ install openstack
 
 ```bash
 sudo apt purge python3-simplejson
+sudo apt purge python-pyasn1-modules
 ```
 
 https://docs.openstack.org/devstack/latest/
